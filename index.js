@@ -30,9 +30,41 @@ const urls = [
     { id: 'b8C9d0', destination: 'https://docs.app/guide/10', userId: 5 }
 ];
 
-/*
-Write your code here
-*/
+app.param('user', (req, res, next, id) => {
+    if (req.user = users.find((v) => v.id == id)) {
+        next();
+    } else {
+        res.status(404).send("User not found");
+    }
+});
+
+app.param('url', (req, res, next, id) => {
+    if (req.userUrl = urls.find((v) => v.id == id)) {
+        next();
+    } else {
+        res.status(404).send("Url not found");
+    }
+});
+
+app.get('/users/:user/urls', (req, res) => {
+    const userUrls = urls.filter((v) => v.userId == req.user.id);
+    if (userUrls.length == 0) {
+        res.status(404).send('No urls found');
+    } else {
+        res.send(userUrls);
+    }
+});
+
+app.get('/users/:user', (req, res) => {
+    res.send(
+        (({ password, ...rest }) => rest)(req.user)
+    );
+});
+
+app.get('/urls/:url', (req, res) => {
+    res.redirect(req.userUrl.destination);
+});
+
 
 app.listen(PORT, () => {
     console.log('Server Ready');

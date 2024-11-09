@@ -14,3 +14,20 @@ GET {{host}}/users/{{userId}}/urls HTTP/1
 # @prompt urlId
 GET {{host}}/urls/{{urlId}} HTTP/1
 ###
+
+# @name create_url
+# @prompt destination
+# @prompt userId
+POST {{host}}/urls HTTP/1
+content-type: application/json
+
+{
+   "destination": "{{destination}}",
+   "userId": "{{userId}}"
+}
+###
+
+# @name delete_url
+# @prompt urlId
+DELETE {{host}}/urls/{{urlId}} HTTP/1
+###

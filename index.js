@@ -1,7 +1,9 @@
 import express from 'express';
+import { generateRandomString } from './lib.js';
 
-const app = express();
 const PORT = 3000;
+const app = express();
+app.use(express.json());
 
 /**
  * @typedef {Object} User
@@ -92,6 +94,39 @@ app.get('/urls/:urlId',
         res.redirect(req.userUrl.destination);
     });
 
+app.post('/urls', (req, res) => {
+    const { destination, userId } = req.body;
+    if (!destination) {
+        res.status(400).send("Missing destination");
+    }
+    if (!userId) {
+        res.status(400).send("Missing userId");
+    }
+
+    const id = generateRandomString(6);
+    const newUrl = {
+        id,
+        destination,
+        userId,
+    };
+    urls.push(newUrl);
+
+    res.send(newUrl);
+});
+
+app.delete('/urls/:urlId',
+    /** @param {express.Request & {userUrl: Url}} req */
+    (req, res) => {
+        const userUrls = urls.filter((v) => v.userId == req.userUrl.userId);
+        if (userUrls.length == 1) {
+            res.status(400).send("Last user url cannot be deleted");
+        }
+
+        const deleted = urls.splice(urls.indexOf(req.userUrl), 1);
+        if (deleted.length == 1) {
+            res.send("Done");
+        }
+    });
 
 app.listen(PORT, () => {
     console.log('Server Ready');

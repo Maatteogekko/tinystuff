@@ -1,9 +1,27 @@
 import express from 'express';
 
 const app = express();
-
 const PORT = 3000;
 
+/**
+ * @typedef {Object} User
+ * @property {number} id
+ * @property {string} name
+ * @property {string} email
+ * @property {number} limit
+ * @property {string} password
+ */
+
+/**
+ * @typedef {Object} Url
+ * @property {string} id
+ * @property {string} destination
+ * @property {number} userId
+ */
+
+/**
+ * @type {User[]}
+ */
 const users = [
     { id: 1, name: 'João Silva', email: 'joao.silva@example.com', limit: 1000, password: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36Zf4a2B5Pz1u1Z1Z1Z1Z1Z' },
     { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', limit: 1500, password: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36Zf4a2B5Pz1u1Z1Z1Z1Z1Z' },
@@ -17,6 +35,9 @@ const users = [
     { id: 10, name: 'Ivy Martinez', email: 'ivy.martinez@example.com', limit: 5500, password: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36Zf4a2B5Pz1u1Z1Z1Z1Z1Z' }
 ];
 
+/**
+ * @type {Url[]}
+ */
 const urls = [
     { id: 'a1B2c3', destination: 'https://news.com/article/1', userId: 2 },
     { id: 'd4E5f6', destination: 'https://shop.net/product/2', userId: 3 },
@@ -30,7 +51,7 @@ const urls = [
     { id: 'b8C9d0', destination: 'https://docs.app/guide/10', userId: 5 }
 ];
 
-app.param('user', (req, res, next, id) => {
+app.param('userId', (req, res, next, id) => {
     if (req.user = users.find((v) => v.id == id)) {
         next();
     } else {
@@ -38,7 +59,7 @@ app.param('user', (req, res, next, id) => {
     }
 });
 
-app.param('url', (req, res, next, id) => {
+app.param('urlId', (req, res, next, id) => {
     if (req.userUrl = urls.find((v) => v.id == id)) {
         next();
     } else {
@@ -46,24 +67,30 @@ app.param('url', (req, res, next, id) => {
     }
 });
 
-app.get('/users/:user/urls', (req, res) => {
-    const userUrls = urls.filter((v) => v.userId == req.user.id);
-    if (userUrls.length == 0) {
-        res.status(404).send('No urls found');
-    } else {
-        res.send(userUrls);
-    }
-});
+app.get('/users/:userId/urls',
+    /** @param {express.Request & {user: User}} req */
+    (req, res) => {
+        const userUrls = urls.filter((v) => v.userId == req.user.id);
+        if (userUrls.length == 0) {
+            res.status(404).send('No urls found');
+        } else {
+            res.send(userUrls);
+        }
+    });
 
-app.get('/users/:user', (req, res) => {
-    res.send(
-        (({ password, ...rest }) => rest)(req.user)
-    );
-});
+app.get('/users/:userId',
+    /** @param {express.Request & {user: User}} req */
+    (req, res) => {
+        res.send(
+            (({ password, ...rest }) => rest)(req.user)
+        );
+    });
 
-app.get('/urls/:url', (req, res) => {
-    res.redirect(req.userUrl.destination);
-});
+app.get('/urls/:urlId',
+    /** @param {express.Request & {userUrl: Url}} req */
+    (req, res) => {
+        res.redirect(req.userUrl.destination);
+    });
 
 
 app.listen(PORT, () => {

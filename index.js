@@ -53,11 +53,24 @@ const urls = [
     { id: 'b8C9d0', destination: 'https://docs.app/guide/10', userId: 5 }
 ];
 
+/**
+ * @param {express.Request} req 
+ * @param {express.Response} res 
+ * @param {express.NextFunction} next 
+ */
+function authMiddleware(req, res, next) {
+    if (req.user = users.find((v) => v.id == req.headers['user-id'])) {
+        next();
+    } else {
+        res.status(401).send('Provide an userId to authenticate')
+    }
+}
+
 app.param('userId', (req, res, next, id) => {
     if (req.user = users.find((v) => v.id == id)) {
         next();
     } else {
-        res.status(404).send("User not found");
+        res.status(404).send('User not found');
     }
 });
 
@@ -65,27 +78,67 @@ app.param('urlId', (req, res, next, id) => {
     if (req.userUrl = urls.find((v) => v.id == id)) {
         next();
     } else {
-        res.status(404).send("Url not found");
+        res.status(404).send('Url not found');
     }
 });
 
-app.get('/users/:userId/urls',
+app.get('/urls',
+    authMiddleware,
     /** @param {express.Request & {user: User}} req */
     (req, res) => {
         const userUrls = urls.filter((v) => v.userId == req.user.id);
         if (userUrls.length == 0) {
             res.status(404).send('No urls found');
-        } else {
-            res.send(userUrls);
+            return;
         }
+
+        res.send(userUrls);
     });
 
-app.get('/users/:userId',
+app.get('/me',
+    authMiddleware,
     /** @param {express.Request & {user: User}} req */
     (req, res) => {
         res.send(
-            (({ password, ...rest }) => rest)(req.user)
+            (({ password, limit, ...rest }) => rest)(req.user)
         );
+    });
+
+app.patch('/me',
+    authMiddleware,
+    /** @param {express.Request & {user: User}} req */
+    (req, res) => {
+        const { name, email } = req.body;
+        if (!name) {
+            res.status(422).send('Missing name');
+            return;
+        }
+        if (typeof name !== 'string' || name.length < 3 || name.length > 50) {
+            res.status(422).send('Invalid name');
+            return;
+        }
+        if (!email) {
+            res.status(422).send('Missing email');
+            return;
+        }
+        if (typeof email !== 'string' || email.length < 3 || email.length > 50) {
+            res.status(422).send('Invalid email');
+            return;
+        }
+
+        const updatedUser = {
+            ...req.user,
+            name,
+            email,
+        };
+        const deleted = users.splice(users.indexOf(req.user), 1, updatedUser);
+        if (deleted.length == 1) {
+            res.send(
+                (({ password, limit, ...rest }) => rest)(updatedUser)
+            );
+        } else {
+            res.status(500).send("Failed to update user");
+        }
     });
 
 app.get('/urls/:urlId',
@@ -97,10 +150,12 @@ app.get('/urls/:urlId',
 app.post('/urls', (req, res) => {
     const { destination, userId } = req.body;
     if (!destination) {
-        res.status(400).send("Missing destination");
+        res.status(400).send('Missing destination');
+        return;
     }
     if (!userId) {
-        res.status(400).send("Missing userId");
+        res.status(400).send('Missing userId');
+        return;
     }
 
     const id = generateRandomString(6);
@@ -119,12 +174,15 @@ app.delete('/urls/:urlId',
     (req, res) => {
         const userUrls = urls.filter((v) => v.userId == req.userUrl.userId);
         if (userUrls.length == 1) {
-            res.status(400).send("Last user url cannot be deleted");
+            res.status(400).send('Last user url cannot be deleted');
+            return;
         }
 
         const deleted = urls.splice(urls.indexOf(req.userUrl), 1);
         if (deleted.length == 1) {
-            res.send("Done");
+            res.send('Done');
+        } else {
+            res.status(500).send("Failed to delete url");
         }
     });
 

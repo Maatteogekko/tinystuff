@@ -1,13 +1,29 @@
 @host=http://localhost:3000
 
-# @name get_users
+# @name get_me
 # @prompt userId
-GET {{host}}/users/{{userId}} HTTP/1
+GET {{host}}/me HTTP/1
+user-id: {{userId}}
+###
+
+# @name patch_me
+# @prompt userId
+# @prompt name
+# @prompt email
+PATCH {{host}}/me HTTP/1
+user-id: {{userId}}
+content-type: application/json
+
+{
+    "name": "{{name}}",
+    "email": "{{email}}"
+}
 ###
 
 # @name get_user_urls
 # @prompt userId
-GET {{host}}/users/{{userId}}/urls HTTP/1
+GET {{host}}/urls HTTP/1
+userId: {{userId}}
 ###
 
 # @name redirect_url
